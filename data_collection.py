@@ -4,7 +4,7 @@ import os
 from hand import HandDetector
 
 DATA_ROOT = "MP_Data"
-actions = np.array(['Hello', 'Thanks', 'Idle'])
+actions = np.array(['Idle'])
 sequences = 30
 frames = 30
 

@@ -9,7 +9,7 @@ model = load_model('action.h5')
 
 sequence = []
 sentence = []
-threshold = 0.8
+threshold = 0.6
 
 cap = cv2.VideoCapture(0)
 detector = HandDetector(maxHands=1)
@@ -26,7 +26,6 @@ while True:
     if len(landmarks) > 0:
         sequence.append(landmarks[0])
         sequence = sequence[-30:]
-        print(sequence)
 
         if len(sequence) == 30:
             res = model.predict(np.expand_dims(sequence, axis=0), verbose=0)[0]
@@ -35,12 +34,14 @@ while True:
 
             if confidence > threshold:
                 current_action = actions[best_guess_index]
-                cv2.putText(img, f'Current action: {current_action} | Confidence: {confidence}%',
-                            (10, 40), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+                cv2.putText(img, f'Current action: {current_action}',
+                            (10, 40), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
+                cv2.putText(img, f'Confidence: {(confidence * 100):.2f}%',
+                            (10, 80), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
 
     else:
         cv2.putText(img, 'No hand', (10, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
     
     cv2.imshow('Detect', img)
     if cv2.waitKey(1) == ord('q'):
