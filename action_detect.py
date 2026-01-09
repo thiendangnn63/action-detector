@@ -3,12 +3,13 @@ import numpy as np
 from keras.models import load_model
 from hand import HandDetector
 
-actions = np.array(['Hello', 'Thanks', 'Idle'])
+actions = np.array(['VolumeUp', 'VolumeDown', 'PlayPause', 'Screenshot', 'CloseCurrentWindow', 'Idle'])
 
 model = load_model('action.h5')
 
 sequence = []
 sentence = []
+predictions = []
 threshold = 0.6
 
 cap = cv2.VideoCapture(0)
@@ -28,16 +29,27 @@ while True:
         sequence = sequence[-30:]
 
         if len(sequence) == 30:
-            res = model.predict(np.expand_dims(sequence, axis=0), verbose=0)[0]
-            best_guess_index = np.argmax(res)
-            confidence = res[best_guess_index]
+            seq = np.array(sequence)
 
-            if confidence > threshold:
-                current_action = actions[best_guess_index]
-                cv2.putText(img, f'Current action: {current_action}',
-                            (10, 40), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
-                cv2.putText(img, f'Confidence: {(confidence * 100):.2f}%',
-                            (10, 80), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
+            velocity = np.diff(seq, axis=0)
+            zeros = np.zeros((1, 42))
+            final = np.vstack([zeros, velocity])
+            
+            res = model.predict(np.expand_dims(final, axis=0), verbose=0)[0]
+            best_guess_index = np.argmax(res)
+
+            predictions.append(best_guess_index)
+            predictions = predictions[-10:]
+
+            most_common_id = np.argmax(np.bincount(predictions))
+
+            if most_common_id == best_guess_index:
+                if res[best_guess_index] > threshold:
+                    current_action = actions[best_guess_index]
+                    cv2.putText(img, f'Current action: {current_action}',
+                                (10, 40), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
+                    cv2.putText(img, f'Confidence: {(res[best_guess_index] * 100):.2f}%',
+                                (10, 80), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 2)
 
     else:
         cv2.putText(img, 'No hand', (10, 40),
